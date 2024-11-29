@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الصفحة الرئيسية</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #4267B2;
+      color: white;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .container {
+      padding: 20px;
+      text-align: center;
+    }
+    .message {
+      background-color: #fff;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .username {
+      font-weight: bold;
+    }
+    .button {
+      padding: 10px;
+      background-color: #4267B2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #365899;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    مرحبًا بك في تطبيق Spherely
+  </header>
+  <div class="container">
+    <button class="button" id="logout-button">تسجيل الخروج</button>
+    <textarea id="message-input" placeholder="اكتب رسالتك هنا..."></textarea>
+    <button class="button" id="publish-button">نشر</button>
+
+    <div id="messages-container"></div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getDatabase, ref, set, get, child, push } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCe4nIbSuyN6sHEFvfpdRbzyILyr-zVhKo",
+      authDomain: "chat-mad-4ec6d.firebaseapp.com",
+      databaseURL: "https://chat-mad-4ec6d-default-rtdb.firebaseio.com",
+      projectId: "chat-mad-4ec6d",
+      storageBucket: "chat-mad-4ec6d.firebasestorage.app",
+      messagingSenderId: "133266731034",
+      appId: "1:133266731034:web:3540d3b2f20c2e3225a1a3",
+      measurementId: "G-12J0W1SW14"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    if (!sessionStorage.getItem('loggedIn')) {
+      window.location.href = "spherely.html";
+    }
+
+    document.getElementById('logout-button').addEventListener('click', () => {
+      sessionStorage.removeItem('loggedIn');
+      alert('تم تسجيل الخروج بنجاح!');
+      window.location.href = "spherely.html";
+    });
+
+    document.getElementById('publish-button').addEventListener('click', () => {
+      const message = document.getElementById('message-input').value;
+      const username = sessionStorage.getItem('username'); 
+
+      if (message.trim() !== '') {
+        const newMessageKey = push(ref(database, 'messages')).key;
+        set(ref(database, 'messages/' + newMessageKey), {
+          username: username,
+          message: message,
+          timestamp: new Date().toISOString()
+        });
+        document.getElementById('message-input').value = '';
+      } else {
+        alert('من فضلك أدخل رسالة!');
+      }
+    });
+
+    const messagesContainer = document.getElementById('messages-container');
+    get(ref(database, 'messages')).then((snapshot) => {
+      if (snapshot.exists()) {
+        snapshot.forEach((childSnapshot) => {
+          const messageData = childSnapshot.val();
+          const messageElement = document.createElement('div');
+          messageElement.classList.add('message');
+          messageElement.innerHTML = `
+            <span class="username">${messageData.username}</span>: <span>${messageData.message}</span>
+          `;
+          messagesContainer.appendChild(messageElement);
+        });
+      } else {
+        messagesContainer.innerHTML = 'لا توجد رسائل بعد.';
+      }
+    });
+  </script>
+
+</body></html>
